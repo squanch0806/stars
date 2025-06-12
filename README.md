@@ -13,7 +13,7 @@
 
 1. 克隆仓库到本地
 2. 打开https://editor.p5js.org/
-3. 代码文件上传
+3. 把bridge.js、index.html、sketch.js、star.js、style.css 这几个代码文件上传
 4. 享受交互体验
 
 ## 技术栈
