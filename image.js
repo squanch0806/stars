@@ -1,33 +1,33 @@
-class Star {
+class Image {
   constructor(imageIndex = 0) {
     let x = width/2;
     let y = 40;
     
-    // 调整大小范围，使图像更大
+    // 调整大小范围
     let sizeCategory = random();
     if (sizeCategory < 0.70) {
-      this.r = random(40, 45); // 增大尺寸
+      this.r = random(30, 35);
     } else if (sizeCategory < 0.98) {
-      this.r = random(45, 50); // 增大中等尺寸
+      this.r = random(35, 40);
     } else {
-      this.r = random(50, 55); // 增大最大尺寸
+      this.r = random(40, 45);
     }
     
     // 使用指定的图像索引
-    this.img = starImages[imageIndex];
+    this.img = imageObjects[imageIndex];
     
     this.done = false;
     
-    // 创建物理引擎中的圆形物体，增加弹性，减轻重量
+    // 创建物理引擎中的圆形物体
     this.body = Bodies.circle(x, y, this.r, {
-      restitution: 1.0,   // 增加弹性到最大
-      friction: 0.005,    // 减少摩擦
-      density: 0.0005,    // 减小密度，使其更轻更容易被弹走
-      frictionAir: 0.001  // 减少空气阻力
+      restitution: 1.0,
+      friction: 0.003,
+      density: 0.0003,
+      frictionAir: 0.0005
     });
     
     // 增加初始下落速度
-    let velocity = Vector.create(random(-0.3, 0.3), random(1.0, 2.0));
+    let velocity = Vector.create(random(-0.3, 0.3), random(0.5, 1.0));
     Body.setVelocity(this.body, velocity);
     Composite.add(engine.world, this.body);
     
@@ -49,11 +49,7 @@ class Star {
     let squash = this.getExtremeSquash();
     scale(squash.x, squash.y);
     
-    // 移除发光效果
-    // drawingContext.shadowBlur = this.r;
-    // drawingContext.shadowColor = "#FFD700";
-    
-    // 绘制emo图片
+    // 绘制图片
     imageMode(CENTER);
     image(this.img, 0, 0, this.r * 2, this.r * 2);
     
@@ -112,20 +108,20 @@ class Star {
     }
     
     let pos = this.body.position;
-    // 一旦图像离开屏幕，就将其标记为done，并且不会再改变状态
-    if (!this.done && (pos.y > height + this.r * 2 || pos.x < -this.r * 2 || pos.x > width + this.r * 2 || pos.y < -height)) {
+    // 一旦图像离开屏幕（包括顶部），就将其标记为done
+    if (!this.done && (pos.y > height + this.r * 2 || pos.x < -this.r * 2 || pos.x > width + this.r * 2 || pos.y < -this.r * 2)) {
       this.done = true;
       console.log("图像离开屏幕，准备生成下一个");
     }
   }
   
   toss() {
-    // 增强抛投力度，使其更容易被弹走
-    let force = Vector.create(random(-0.06, 0.06), random(-0.15, -0.08));
+    // 增强抛投力度
+    let force = Vector.create(random(-0.08, 0.08), random(-0.2, -0.1));
     Body.applyForce(this.body, this.body.position, force);
     
     // 增加旋转
-    this.rotationSpeed = random(-0.08, 0.08);
+    this.rotationSpeed = random(-0.1, 0.1);
   }
   
   removeCircle() {
