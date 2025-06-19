@@ -1,9 +1,9 @@
 class Star {
-  constructor() {
+  constructor(imageIndex = 0) {
     let x = width/2;
     let y = 40;
     
-    // 调整大小范围，使emo图像更明显
+    // 调整大小范围，使图像更明显
     let sizeCategory = random();
     if (sizeCategory < 0.70) {
       this.r = random(30, 35); // 增加最小尺寸
@@ -13,12 +13,8 @@ class Star {
       this.r = random(40, 45); // 增加最大尺寸
     }
     
-    // 使用静态计数器来交替使用emo1和emo2
-    if (!Star.counter) Star.counter = 0;
-    
-    // 交替使用emo1和emo2
-    this.img = starImages[Star.counter % starImages.length];
-    Star.counter++;
+    // 使用指定的图像索引
+    this.img = starImages[imageIndex];
     
     this.done = false;
     
@@ -113,10 +109,10 @@ class Star {
     }
     
     let pos = this.body.position;
-    // 一旦emo离开屏幕，就将其标记为done，并且不会再改变状态
+    // 一旦图像离开屏幕，就将其标记为done，并且不会再改变状态
     if (!this.done && (pos.y > height + this.r * 2 || pos.x < -this.r * 2 || pos.x > width + this.r * 2 || pos.y < -height)) {
       this.done = true;
-      console.log("Emo离开屏幕，准备生成下一个");
+      console.log("图像离开屏幕，准备生成下一个");
     }
   }
   

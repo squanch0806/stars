@@ -15,6 +15,14 @@ let stars = [];
 let maxStars = 1; 
 // 标记是否需要生成新的emo图像
 let shouldCreateNewEmo = true;
+// 当前使用的图像索引
+let currentImageIndex = 0;
+// 已经生成的图像数量
+let generatedCount = 0;
+// 一组的图像数量
+let groupSize = 8;
+// 是否完成了一组
+let groupCompleted = false;
 
 let isTossing = false;
 let frameSkip = 0;
@@ -22,35 +30,32 @@ let frameSkip = 0;
 // 添加图片数组
 let starImages = [];
 
+// 重来按钮
+let restartButton;
+
 function preload() {
   // Load the handPose model
   handPose = ml5.handPose({maxHands: 1, flipped: true});
   
-  // 预加载PNG图片 - emo1.png
+  // 预加载8个PNG图片
   try {
-    starImages[0] = loadImage('images/emo1.png', 
-      // 成功加载时的回调
-      () => console.log('成功加载emo1.png'), 
-      // 加载失败时的回调
-      () => {
-        console.error('无法加载emo1.png，使用默认星星');
-        starImages[0] = createDefaultStar(100, 100);
-      }
-    );
-    
-    // 如果有emo2.png，也加载它
-    starImages[1] = loadImage('images/emo2.png',
-      () => console.log('成功加载emo2.png'),
-      () => {
-        console.error('无法加载emo2.png，使用默认星星');
-        starImages[1] = createDefaultStar(80, 80);
-      }
-    );
+    for (let i = 1; i <= 8; i++) {
+      starImages[i-1] = loadImage(`images/${i}.png`, 
+        // 成功加载时的回调
+        () => console.log(`成功加载图片${i}.png`), 
+        // 加载失败时的回调
+        () => {
+          console.error(`无法加载图片${i}.png，使用默认图像`);
+          starImages[i-1] = createDefaultStar(100, 100);
+        }
+      );
+    }
   } catch (e) {
     console.error('加载图片时出错:', e);
     // 创建默认星星图像
-    starImages[0] = createDefaultStar(100, 100);
-    starImages[1] = createDefaultStar(80, 80);
+    for (let i = 0; i < 8; i++) {
+      starImages[i] = createDefaultStar(100, 100);
+    }
   }
 }
 
@@ -91,11 +96,22 @@ function setup() {
   engine.gravity.scale = 0.0008; // 稍微减小重力影响，使emo图像飘动更自然
   bridge = new Bridge(num, radius, length);
   
-  // 确保在开始时就有一个emo图像
+  // 创建重来按钮
+  restartButton = createButton('重来');
+  restartButton.position(width - 80, 20);
+  restartButton.size(60, 30);
+  restartButton.style('background-color', '#4CAF50');
+  restartButton.style('color', 'white');
+  restartButton.style('border', 'none');
+  restartButton.style('border-radius', '5px');
+  restartButton.style('font-size', '16px');
+  restartButton.style('cursor', 'pointer');
+  restartButton.mousePressed(restartGame);
+  
+  // 确保在开始时就有一个图像
   setTimeout(() => {
     if (stars.length === 0 && shouldCreateNewEmo) {
-      stars.push(new Star());
-      shouldCreateNewEmo = false;
+      createNewStar();
     }
   }, 1000); // 延迟1秒，确保图片已加载
 }
@@ -111,10 +127,9 @@ function draw() {
   
   image(video, 0, 0, width, height);
   
-  // 检查是否需要创建新的emo图像
-  if (shouldCreateNewEmo && stars.length < maxStars) { 
-    stars.push(new Star());
-    shouldCreateNewEmo = false; // 创建后设置为false，等待当前emo被弹出屏幕
+  // 检查是否需要创建新的图像
+  if (shouldCreateNewEmo && stars.length < maxStars && !groupCompleted) { 
+    createNewStar();
   }
   
   // 处理手势和绳子
@@ -143,10 +158,61 @@ function draw() {
     if (stars[i].done) {
       stars[i].removeCircle();
       stars.splice(i, 1);
-      // 当emo被弹出屏幕后，允许创建新的emo
+      // 当图像被弹出屏幕后，允许创建新的图像
       shouldCreateNewEmo = true;
     }
   }
+  
+  // 显示进度信息
+  displayProgress();
+}
+
+// 创建新的星星
+function createNewStar() {
+  stars.push(new Star(currentImageIndex));
+  shouldCreateNewEmo = false; // 创建后设置为false，等待当前图像被弹出屏幕
+  
+  // 更新计数和索引
+  generatedCount++;
+  currentImageIndex = (currentImageIndex + 1) % starImages.length;
+  
+  // 检查是否完成了一组
+  if (generatedCount >= groupSize) {
+    groupCompleted = true;
+    console.log("一组图像已全部生成");
+  }
+}
+
+// 显示进度信息
+function displayProgress() {
+  fill(0);
+  noStroke();
+  textSize(16);
+  textAlign(LEFT, TOP);
+  text(`当前: ${generatedCount}/${groupSize}`, 20, 20);
+  
+  if (groupCompleted) {
+    textAlign(CENTER, CENTER);
+    textSize(24);
+    text("一组图像已全部完成，点击"重来"按钮重新开始", width/2, 50);
+  }
+}
+
+// 重启游戏
+function restartGame() {
+  // 移除所有现有的星星
+  for (let i = stars.length - 1; i >= 0; i--) {
+    stars[i].removeCircle();
+    stars.splice(i, 1);
+  }
+  
+  // 重置计数器和状态
+  currentImageIndex = 0;
+  generatedCount = 0;
+  shouldCreateNewEmo = true;
+  groupCompleted = false;
+  
+  console.log("游戏已重启");
 }
 
 // Callback function for when handPose outputs data
@@ -162,7 +228,7 @@ function keyPressed() {
     // 添加更明亮的闪光效果
     background(255, 240, 180, 180);
     
-    // 将所有emo图像向上抛
+    // 将所有图像向上抛
     stars.forEach(star => {
       star.toss();
     });
