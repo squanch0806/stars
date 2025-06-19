@@ -3,45 +3,65 @@ class Star {
     let x = width/2;
     let y = 40;
     
+    // 调整大小范围，使emo图像更明显
     let sizeCategory = random();
     if (sizeCategory < 0.70) {
-      this.r = random(7, 12);
+      this.r = random(30, 35); // 增加最小尺寸
     } else if (sizeCategory < 0.98) {
-      this.r = random(15, 22);
+      this.r = random(35, 40); // 调整中等尺寸
     } else {
-      this.r = random(30, 40);
+      this.r = random(40, 45); // 增加最大尺寸
     }
-    this.c = "#FFD700";
-    this.done = false;
-    this.points = 5;
-    this.innerRadius = this.r * 0.6;
     
-    this.body = Bodies.circle(x, y, this.r, {restitution: 0.8});
+    // 使用静态计数器来交替使用emo1和emo2
+    if (!Star.counter) Star.counter = 0;
+    
+    // 交替使用emo1和emo2
+    this.img = starImages[Star.counter % starImages.length];
+    Star.counter++;
+    
+    this.done = false;
+    
+    // 创建物理引擎中的圆形物体，增加弹性
+    this.body = Bodies.circle(x, y, this.r, {
+      restitution: 0.9, // 增加弹性
+      friction: 0.01,   // 减少摩擦
+      density: 0.001    // 减小密度，使其更容易被弹走
+    });
     let velocity = Vector.create(random(-0.3, 0.3), random(0.2, 0.5));
     Body.setVelocity(this.body, velocity);
     Composite.add(engine.world, this.body);
     
     this.lastCollisionTime = 0;
     this.collisionForce = 0;
+    
+    // 添加旋转效果
+    this.rotationSpeed = random(-0.03, 0.03);
   }
   
   display() {
     push();
     translate(this.body.position.x, this.body.position.y);
+    
+    // 应用物理引擎的旋转
     rotate(this.body.angle);
     
+    // 应用挤压效果
     let squash = this.getExtremeSquash();
     scale(squash.x, squash.y);
     
-    drawingContext.shadowBlur = this.r;
-    drawingContext.shadowColor = "#FFD700";
+    // 移除发光效果
+    // drawingContext.shadowBlur = this.r;
+    // drawingContext.shadowColor = "#FFD700";
     
-    fill(this.c);
-    stroke('#FFC300');
-    strokeWeight(1);
-    this.drawStar(this.r);
+    // 绘制emo图片
+    imageMode(CENTER);
+    image(this.img, 0, 0, this.r * 2, this.r * 2);
     
     pop();
+    
+    // 添加一点旋转效果
+    Body.setAngularVelocity(this.body, this.rotationSpeed);
   }
   
   getExtremeSquash() {
@@ -85,18 +105,6 @@ class Star {
     }
   }
   
-  drawStar(radius) {
-    beginShape();
-    for (let i = 0; i < this.points * 2; i++) {
-      let r = (i % 2 === 0) ? radius : this.innerRadius * (radius / this.r);
-      let angle = TWO_PI / (this.points * 2) * i - PI/2;
-      let x = cos(angle) * r;
-      let y = sin(angle) * r;
-      vertex(x, y);
-    }
-    endShape(CLOSE);
-  }
-  
   checkDone() {
     let speed = Math.sqrt(this.body.velocity.x ** 2 + this.body.velocity.y ** 2);
     if (speed > 3) {
@@ -105,16 +113,20 @@ class Star {
     }
     
     let pos = this.body.position;
-    if (pos.y > height + this.r * 2 || pos.x < -this.r * 2 || pos.x > width + this.r * 2 || pos.y < -height) {
+    // 一旦emo离开屏幕，就将其标记为done，并且不会再改变状态
+    if (!this.done && (pos.y > height + this.r * 2 || pos.x < -this.r * 2 || pos.x > width + this.r * 2 || pos.y < -height)) {
       this.done = true;
-    } else {
-      this.done = false;
+      console.log("Emo离开屏幕，准备生成下一个");
     }
   }
   
   toss() {
-    let force = Vector.create(random(-0.03, 0.03), random(-0.08, -0.04));
+    // 增强抛投力度，使其更容易被弹走
+    let force = Vector.create(random(-0.05, 0.05), random(-0.12, -0.06));
     Body.applyForce(this.body, this.body.position, force);
+    
+    // 增加旋转
+    this.rotationSpeed = random(-0.06, 0.06);
   }
   
   removeCircle() {

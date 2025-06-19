@@ -7,9 +7,19 @@
 ehthumbs.db
 Thumbs.db
 
-# 编辑器临时文件
-.vscode/
+# IDE和编辑器文件
 .idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# 日志文件
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 编辑器临时文件
 *.swp
 *.swo
 
